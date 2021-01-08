@@ -2,12 +2,12 @@
 using namespace IP;
 
 enum FILTERS { BOX, TRIANGLE, CUBIC_CONV, LANCZOS, HANN, HAMMING };
-double	boxFilter	(double, double);
-double	triFilter	(double, double);
-double	cubicConv	(double, double);
-double	lanczos 	(double, double);
-double	hann	 	(double, double);
-double	hamming	 	(double, double);
+double	boxFilter(double, double);
+double	triFilter(double, double);
+double	cubicConv(double, double);
+double	lanczos(double, double);
+double	hann(double, double);
+double	hamming(double, double);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // resize1D:
@@ -20,11 +20,11 @@ double	hamming	 	(double, double);
 //
 void
 resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double param,
-	 ChannelPtr<uchar> dst)
+	ChannelPtr<uchar> dst)
 {
 	// copy src to dst if no scale change
-	if(len == nlen) {
-		for(int i = 0; i<len; ++i) {
+	if (len == nlen) {
+		for (int i = 0; i < len; ++i) {
 			*dst = *src;
 			src += offst;
 			dst += offst;
@@ -38,10 +38,10 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 
 	// default values for filter and its half-width support
 	filter = triFilter;
-	filterSupport =  1;
+	filterSupport = 1;
 
 	// compute filterSupport: the half-width of the filter
-	switch(mtd) {
+	switch (mtd) {
 	case FILTERS::BOX:
 		filter = boxFilter;
 		filterSupport = .5;
@@ -74,11 +74,11 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 	// init filter amplitude (fscale) and width (fwidth), and scale change
 	double fwidth = filterSupport;
 	double fscale = 1.0;
-	double  scale = (double) nlen / len;	// resampling scale factor
+	double  scale = (double)nlen / len;	// resampling scale factor
 
 	// image minification: update fwidth and fscale;
 	// else kernel remains intact for magnification
-	if(scale < 1.0) {	// minification: h(x) -> h(x*scale) * scale
+	if (scale < 1.0) {	// minification: h(x) -> h(x*scale) * scale
 		fwidth = filterSupport / scale;	// broaden  filter
 		fscale = scale;			// lower amplitude
 	}
@@ -90,9 +90,9 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 	// allocate buffer memory if necessary
 	ImagePtr	 Ibuf;
 	ChannelPtr<uchar> buf;
-	int		  t=0;
+	int		  t = 0;
 	IP_getChannel(Ibuf, 0, buf, t);
-	if(Ibuf->width() < buflen || t != UCHAR_TYPE)
+	if (Ibuf->width() < buflen || t != UCHAR_TYPE)
 		Ibuf->replaceChannel(0, buflen, 1, UCHAR_TYPE);
 
 	// copy src into padded buffer
@@ -101,19 +101,19 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 	// copy src into dst; save space for padding
 	ChannelPtr<uchar> p1 = src;
 	ChannelPtr<uchar> p2 = buf + padlen;
-	for(int x=0; x<len; ++x,p1+=offst) p2[x] = *p1;
-	
+	for (int x = 0; x < len; ++x, p1 += offst) p2[x] = *p1;
+
 	// pad left and right columns
 	int  v1, v2;
 	p1 = buf + padlen;
-	p2 = p1  + len - 1;
+	p2 = p1 + len - 1;
 
 	// replicate border
 	v1 = p1[0];
 	v2 = p2[0];
-	for(int x=1; x<= padlen; ++x) {
+	for (int x = 1; x <= padlen; ++x) {
 		p1[-x] = v1;
-		p2[ x] = v2;
+		p2[x] = v2;
 	}
 
 
@@ -126,13 +126,13 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 	double	acc;			// convolution accumulator
 	double	pixel;			// fetched pixel value
 	double	weight;			// filter kernel weight
-	for(int x = 0; x<nlen; ++x) {
+	for (int x = 0; x < nlen; ++x) {
 		// map output x to input u: inverse mapping
 		u = x / scale;
 
 		// left and right extent of kernel centered at u
-		if(u - fwidth < 0)
-			left = FLOOR  (u - fwidth);
+		if (u - fwidth < 0)
+			left = FLOOR(u - fwidth);
 		else    left = CEILING(u - fwidth);
 		right = FLOOR(u + fwidth);
 
@@ -141,19 +141,19 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 
 		// weigh input pixels around u with kernel
 		double sumWeight = 0;
-		for(int i=left; i <= right; ++i) {
+		for (int i = left; i <= right; ++i) {
 			// fetch pixel
 			// padding replaces pixel = srcp[CLIP(i, 0, len-1)] to pixel = srcp[i]
 			pixel = srcp[i];
 
 			// evaluate weight; multiply it with pixel and add it to accumulator
-			weight = (*filter)((u-i) * fscale, param);
+			weight = (*filter)((u - i) * fscale, param);
 			sumWeight += weight;
 			acc += (pixel * weight);
 		}
 
 		// assign weighted accumulator to dst
-		*dst = (int) CLIP(ROUND(acc / sumWeight), 0, MaxGray);
+		*dst = (int)CLIP(ROUND(acc / sumWeight), 0, MaxGray);
 		dst += offst;
 	}
 }
@@ -168,7 +168,7 @@ resize1D(ChannelPtr<uchar> src, int len, int nlen, int offst, int mtd, double pa
 double
 boxFilter(double t, double /*param*/)
 {
-	if((t > -.5) && (t <= .5)) return(1.0);
+	if ((t > -.5) && (t <= .5)) return(1.0);
 	return(0.0);
 }
 
@@ -182,8 +182,8 @@ boxFilter(double t, double /*param*/)
 double
 triFilter(double t, double /*param*/)
 {
-	if(t < 0) t = -t;
-	if(t < 1.0) return(1.0 - t);
+	if (t < 0) t = -t;
+	if (t < 1.0) return(1.0 - t);
 	return(0.0);
 }
 
@@ -197,16 +197,16 @@ triFilter(double t, double /*param*/)
 double
 cubicConv(double t, double param = -1)
 {
-	float	A; 
+	float	A;
 	double t2, t3;
 
-	if(t < 0) t = -t;
-	t2 = t  * t;
+	if (t < 0) t = -t;
+	t2 = t * t;
 	t3 = t2 * t;
 
 	A = param;
-	if(t < 1.0) return((A + 2)*t3 - (A + 3)*t2 + 1);
-	if(t < 2.0) return(A * (t3 - 5 * t2 + 8 * t - 4));
+	if (t < 1.0) return((A + 2) * t3 - (A + 3) * t2 + 1);
+	if (t < 2.0) return(A * (t3 - 5 * t2 + 8 * t - 4));
 	return(0.0);
 }
 
@@ -221,7 +221,7 @@ double
 sinc(double t)
 {
 	t *= PI;
-	if(t != 0) return(sin(t) / t);
+	if (t != 0) return(sin(t) / t);
 	return(1.0);
 }
 
@@ -233,13 +233,13 @@ sinc(double t)
 // Lanczos filter.
 //
 double
-lanczos(double t, double param=3)
+lanczos(double t, double param = 3)
 {
 	int	N;
 
-	N = (int) param;
-	if(t < 0) t = -t;
-	if(t < N) return(sinc(t) * sinc(t / N));
+	N = (int)param;
+	if (t < 0) t = -t;
+	if (t < N) return(sinc(t) * sinc(t / N));
 	return(0.0);
 }
 
@@ -251,13 +251,13 @@ lanczos(double t, double param=3)
 // Hann windowed sinc function.
 //
 double
-hann(double t, double param=3)
+hann(double t, double param = 3)
 {
 	int	N;
 
-	N = (int) param;
-	if(t < 0) t = -t;
-	if(t < N) return(sinc(t) * (.5 + .5*cos(PI*t / N)));
+	N = (int)param;
+	if (t < 0) t = -t;
+	if (t < N) return(sinc(t) * (.5 + .5 * cos(PI * t / N)));
 	return(0.0);
 }
 
@@ -268,13 +268,13 @@ hann(double t, double param=3)
 // hamming windowed sinc function.
 //
 double
-hamming(double t, double param=3)
+hamming(double t, double param = 3)
 {
 	int	N;
 
-	N = (int) param;
-	if(t < 0) t = -t;
-	if(t < N) return(sinc(t) * (.54 + .46*cos(PI*t / N)));
+	N = (int)param;
+	if (t < 0) t = -t;
+	if (t < N) return(sinc(t) * (.54 + .46 * cos(PI * t / N)));
 	return(0.0);
 }
 
@@ -285,23 +285,23 @@ hamming(double t, double param=3)
 void
 HW_resize(ImagePtr I1, int ww, int hh, int kernelID, double param, ImagePtr I2)
 {
-	int w = I1->width ();
+	int w = I1->width();
 	int h = I1->height();
 
 	// handle trivial case where dimensions remain unchanged
-	if(ww == w && hh == h) {
-		if(I1 != I2) IP_copyImage(I1, I2);
+	if (ww == w && hh == h) {
+		if (I1 != I2) IP_copyImage(I1, I2);
 		return;
 	}
 
 	// init II
 	ImagePtr   II;
-	if(I1 == I2) IP_copyImage(I1, II);
+	if (I1 == I2) IP_copyImage(I1, II);
 	else II = I1;
 
 	// init I2 info
 	IP_copyImageHeaderOnly(I1, I2);
-	I2->setWidth (ww);
+	I2->setWidth(ww);
 	I2->setHeight(hh);
 	I2->initChannels(I1->channelTypes());
 
@@ -312,25 +312,48 @@ HW_resize(ImagePtr I1, int ww, int hh, int kernelID, double param, ImagePtr I2)
 	// 2-pass scale algorithm
 	int t;
 	ChannelPtr<uchar> src, dst;
-	for(int ch = 0; IP_getChannel(II, ch, src, t); ch++) {
+	for (int ch = 0; IP_getChannel(II, ch, src, t); ch++) {
 		IP_getChannel(I2, ch, dst, t);
+		// PUT MY CODE HERE
+		ChannelPtr<uchar> holder;
+		IP_getChannel(I3, ch, holder, t);
 
 		// horizontal pass scales rows
-		for(int y = 0; y<h; ++y) {
+		for (int y = 0; y < h; ++y) {
 
-// PUT YOUR CODE HERE
-
+			// PUT YOUR CODE HERE------------------------------
+			resize1D(src + w * y, w, ww, 1, kernelID, param, holder + ww * y);
+			//here we feed the source plus the offset for each line as we go through every row in the image
+			//then we input the length of the input for the 1d which in this case is the width of image
+			//then we put in the desired length which is the width of the new image namely ww
+			//then we tell the program to increment by 1 to get each element
+			//then we input the kernel ID so the user can choose whcih kernel they want to use
+			//then we pass the parameter also given by the user
+			//finally we pass the channel ptr plus the offset to the output image which is our temp image to
+			//hold the results for the rows
 		}
 
 		// vertical pass scales columns
-		for(int x = 0; x<ww; ++x) {
+		for (int x = 0; x < ww; ++x) {
 
-// PUT YOUR CODE HERE
-
+			// PUT YOUR CODE HERE------------------------------
+			resize1D(holder, h, hh, ww, kernelID, param, dst); //this is erealish code 
+			holder++;// += x;
+			dst++;// += x;
+			//here we feed the holder whcih we increment afterwards for each column as we go through every row in the image
+			//then we input the length of the input for the 1d which in this case is the height of image
+			//then we put in the desired length which is the height of the new image namely hh
+			//then we tell the program to increment by w to get each element, since they are in columsn, the next elemnt is current + w
+			//then we input the kernel ID so the user can choose which kernel they want to use
+			//then we pass the parameter also given by the user
+			//finally we pass the channel ptrto the output image which is our final ouput which
+			//hold the results for the rows 
+			//as mentioned for every column we increment the two images to go to the next column. 
+			//since if column 1 was a: 0, 2: w, 3: 2*w .. i*w then the 2nd column is 1, w+1, 2*w+1, ...  i*w+1 etc... 
 		}
 	}
 
 	// free global buffer
-	if(II != I1) II->freeImage();
+	if (II != I1) II->freeImage();
 	I3->freeImage();
 }
