@@ -7,9 +7,7 @@ using namespace IP;
 // Threshold I1 using threshold thr. Output is in I2.
 // input<thr: output=0;	 input >= thr: output=MaxGray (255)
 //
-void
-HW_threshold(ImagePtr I1, int thr, ImagePtr I2)
-{
+void HW_threshold(ImagePtr I1, int thr, ImagePtr I2){
 	// copy image header (width, height) of input image I1 to output image I2
 	IP_copyImageHeader(I1, I2);
 
@@ -26,11 +24,6 @@ HW_threshold(ImagePtr I1, int thr, ImagePtr I2)
 	// declarations for image channel pointers and datatype
 	ChannelPtr<uchar> p1, p2;
 	int type;
-
-	// Note: IP_getChannel(I, ch, p1, type) gets pointer p1 of channel ch in image I.
-	// The pixel datatype (e.g., uchar, short, ...) of that channel is returned in type.
-	// It is ignored here since we assume that our input images consist exclusively of uchars.
-	// IP_getChannel() returns 1 when channel ch exists, 0 otherwise.
 
 	// visit all image channels and evaluate output image
 	for(int ch=0; IP_getChannel(I1, ch, p1, type); ch++) {	// get input  pointer for channel ch
